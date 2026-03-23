@@ -39,6 +39,13 @@ export const OtherMessage: Story = {
 };
 
 export const Conversation: Story = {
+  args: {
+    message: {
+      content: "",
+      createdAt: "2024-12-20T10:30:00Z",
+      isOwn: true,
+    },
+  },
   render: () => (
     <div className="space-y-3">
       <MessageBubble
