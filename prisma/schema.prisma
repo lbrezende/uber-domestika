@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  PROFESSIONAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  image     String?
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+
+  professional    Professional?
+  reviews         Review[]       @relation("ReviewAuthor")
+  sentMessages    Message[]      @relation("MessageSender")
+  clientConversations    Conversation[] @relation("ConversationClient")
+
+  @@map("users")
+}
+
+model Professional {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  bio            String
+  services       String[]
+  hourlyRate     Float
+  city           String
+  neighborhood   String
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+  available      Boolean  @default(true)
+  photo          String
+  createdAt      DateTime @default(now())
+
+  user           User           @relation(fields: [userId], references: [id])
+  reviews        Review[]
+  conversations  Conversation[] @relation("ConversationProfessional")
+
+  @@map("professionals")
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  professionalId  String
+  authorId        String
+  rating          Int
+  comment         String
+  createdAt       DateTime     @default(now())
+
+  professional    Professional @relation(fields: [professionalId], references: [id])
+  author          User         @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  @@map("reviews")
+}
+
+model Conversation {
+  id              String       @id @default(cuid())
+  clientId        String
+  professionalId  String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  client          User         @relation("ConversationClient", fields: [clientId], references: [id])
+  professional    Professional @relation("ConversationProfessional", fields: [professionalId], references: [id])
+  messages        Message[]
+
+  @@unique([clientId, professionalId])
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversationId  String
+  senderId        String
+  content         String
+  createdAt       DateTime     @default(now())
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  sender          User         @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
